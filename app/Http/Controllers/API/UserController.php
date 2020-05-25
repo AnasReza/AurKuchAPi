@@ -9,22 +9,33 @@ use Validator;
 
 class UserController extends Controller 
 {
-	public $successStatus = 200;
+    public $successStatus = 200;
+    public $errorStatus = 401;
 
-	/** 
+    /** 
      * login api 
      * 
      * @return \Illuminate\Http\Response 
      */ 
     public function login(){ 
-        if(Auth::attempt(['email' => request('email'), 'password' => request('password')])){ 
-            $user = Auth::user(); 
-            $success['token'] =  $user->createToken('MyApp')-> accessToken; 
-            return response()->json(['success' => $success], $this-> successStatus); 
-        } 
-        else{ 
-            return response()->json(['error'=>'Unauthorised'], 401); 
-        } 
+        
+        try{
+            if(Auth::attempt(
+                [
+                    'email' => request('email'), 
+                    'password' => request('password')
+                ]
+            )){ 
+                $user = Auth::user(); 
+                $result['token'] =  $user->createToken('MyApp')-> accessToken; 
+                return $this->formateSuccessResponse($result); 
+            } 
+            else{ 
+                return $this->formateErrorResponse('Unauthorised');
+            } 
+        }catch (\Exception $ex) {
+            return $this->formateErrorResponse($ex->getMessage());
+        }
     }
 
     /** 
@@ -34,23 +45,33 @@ class UserController extends Controller
      */ 
     public function register(Request $request) 
     { 
-        $validator = Validator::make($request->all(), [ 
-            'name' => 'required', 
-            'email' => 'required|email', 
-            'password' => 'required', 
-        ]);
-		
-		if ($validator->fails()) { 
-            return response()->json(['error'=>$validator->errors()], 401);
-        }
-		
-		$input = $request->all(); 
-        $input['password'] = bcrypt($input['password']); 
-        $user = User::create($input); 
-        $success['token'] =  $user->createToken('MyApp')-> accessToken; 
-        $success['name'] =  $user->name;
+        try {
+            $validator = Validator::make($request->all(), [ 
+                'name' => 'required', 
+                'email' => 'required|email', 
+                'password' => 'required',
+                'gender' => 'required',
+            ]);
+            
+            if ($validator->fails()) { 
+                return $this->formateErrorResponse($validator->errors());
+            }
+            
+            $input = $request->all(); 
+            $input['password'] = bcrypt($input['password']); 
 
-		return response()->json(['success'=>$success], $this-> successStatus); 
+            $user = User::create($input);
+            $result['token'] =  $user->createToken('MyApp')-> accessToken;
+
+            $result['name'] =  $user->name;
+
+            return $this->formateSuccessResponse($result);
+
+        } catch (\Exception $ex) {
+            return $this->formateErrorResponse($ex->getMessage());
+        }
+
+        
     }
 
     /** 
@@ -60,7 +81,53 @@ class UserController extends Controller
      */ 
     public function details() 
     { 
-        $user = Auth::user(); 
-        return response()->json(['success' => $user], $this-> successStatus); 
+        try{
+            $user = Auth::user(); 
+            $result = ['user' => $user];
+            return $this->formateSuccessResponse($result);
+
+        }catch (\Exception $ex) {
+            return $this->formateErrorResponse($ex->getMessage());
+        }
+    }
+
+
+    public function formateSuccessResponse($result){
+        return response()->json(
+            [
+                'status' => true,
+                'message' => '',
+                'result' => $result
+            ], 
+            $this-> successStatus
+        ); 
+    }
+
+    public function subArraysToString($ar, $sep = ', ') {
+        $str = '';
+        foreach ($ar as $val) {
+            $str .= implode($sep, $val);
+            $str .= $sep; // add separator between sub-arrays
+        }
+        $str = rtrim($str, $sep); // remove last separator
+        return $str;
+    }
+
+    public function formateErrorResponse($message){
+        
+        if(is_object($message)){
+            $messages = $message->getMessages();
+            if(is_array($messages)){
+                $message = $this->subArraysToString($messages,' ');
+            }
+        }
+        return response()->json(
+            [
+                'status' => false,
+                'message' => $message,
+                'result' => []
+            ], 
+            $this-> errorStatus
+        ); 
     } 
 }
