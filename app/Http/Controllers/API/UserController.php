@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\User; 
 use Illuminate\Support\Facades\Auth; 
 use Validator;
+use Illuminate\Validation\Rule;
 
 class UserController extends Controller 
 {
@@ -22,7 +23,7 @@ class UserController extends Controller
         try{
             if(Auth::attempt(
                 [
-                    'email' => request('email'), 
+                    'username' => request('username'), 
                     'password' => request('password')
                 ]
             )){ 
@@ -47,10 +48,9 @@ class UserController extends Controller
     { 
         try {
             $validator = Validator::make($request->all(), [ 
-                'name' => 'required', 
-                'email' => 'required|email', 
                 'password' => 'required',
                 'gender' => 'required',
+                'username' => 'unique:users,username,required',
             ]);
             
             if ($validator->fails()) { 
@@ -63,7 +63,7 @@ class UserController extends Controller
             $user = User::create($input);
             $result['token'] =  $user->createToken('MyApp')-> accessToken;
 
-            $result['name'] =  $user->name;
+            $result['username'] =  $user->username;
 
             return $this->formateSuccessResponse($result);
 
