@@ -8,6 +8,7 @@ use App\Helpers\Data as HelperData;
 use Illuminate\Support\Facades\Auth; 
 use Validator;
 use Twilio\Rest\Client;
+use Twilio\Http\CurlClient;
 
 class SmsController extends Controller 
 {
@@ -41,11 +42,14 @@ class SmsController extends Controller
             $input = $request->all(); 
 
             /********* Send SMS **********/ 
-            // $twilio = new Client($this->twilioSid, $this->twilioToken);
-            // $result = $twilio->verify->v2
-            //     ->services($this->twilioVerifySid)
-            //     ->verifications
-            //     ->create($input['phone_number'], "sms");
+            $client = new Client($this->twilioSid, $this->twilioToken);
+            $curlOptions = [ CURLOPT_SSL_VERIFYHOST => false, CURLOPT_SSL_VERIFYPEER => false];
+		    $client->setHttpClient(new CurlClient($curlOptions));
+
+            $result = $client->verify->v2
+                ->services($this->twilioVerifySid)
+                ->verifications
+                ->create($input['phone_number'], "sms");
 
             /******** Mobile number inserted into user table *********/ 
             User::where('id', $userId)->update(['phone_number' => $input['phone_number']]);
