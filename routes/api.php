@@ -18,5 +18,6 @@ Route::post('login', [ 'as' => 'login', 'uses' => 'API\UserController@login']);
 Route::post('register', [ 'as' => 'register', 'uses' => 'API\UserController@register']);
 
 Route::group(['middleware' => 'auth:api'], function(){
-	Route::post('details', 'API\UserDetailController@details');
+	Route::post('details', 'API\UserController@details');
+	Route::post('sendOtp', 'API\SmsController@sendOtpToNumber');
 });

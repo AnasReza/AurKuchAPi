@@ -13,16 +13,6 @@ class UserController extends Controller
     public $successStatus = 200;
     public $errorStatus = 401;
 
-    private $twilioToken;
-    private $twilioSid;
-    private $twilioVerifySid;
-
-    public function __construct() {
-        $this->twilioToken = getenv('TWILIO_AUTH_TOKEN');
-        $this->twilioSid = getenv('TWILIO_SID');
-        $this->twilioVerifySid = getenv('TWILIO_VERIFY_SID');
-    }
-
     /** 
      * login api 
      * 
@@ -80,42 +70,6 @@ class UserController extends Controller
         } catch (\Exception $ex) {
             return $this->formateErrorResponse($ex->getMessage());
         }
-
-        
-    }
-
-    public function sendOtpToNumber(Request $request){
-
-        try {
-
-            $userId = Auth::user()->id; 
-            
-            $validator = Validator::make($request->all(), [ 
-                'phone_number' => ['required', 'numeric', 'unique:users'],
-            ]);
-            
-            if ($validator->fails()) { 
-                return $this->formateErrorResponse($validator->errors());
-            }
-            
-            $input = $request->all(); 
-
-            /********* Send SMS **********/ 
-            $twilio = new Client($this->twilioSid, $this->twilioToken);
-            $result = $twilio->verify->v2
-                ->services($twilioVerifySid)
-                ->verifications
-                ->create($input['phone_number'], "sms");
-
-            /******** Mobile number inserted into user table *********/ 
-            User::where('id', $userId)->update(['phone_number' => $input['phone_number']]);
-
-            return $this->formateSuccessResponse('OPT successfully sended');
-
-        } catch (\Exception $ex) {
-            return $this->formateErrorResponse($ex->getMessage());
-        }
-
     }
 
     /** 
