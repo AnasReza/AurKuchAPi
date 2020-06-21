@@ -116,15 +116,10 @@ class UserController extends Controller
             return $this->formateErrorResponse($ex->getMessage());
         }
 
-    }
+    } 
 
-    /** 
-     * details api 
-     * 
-     * @return \Illuminate\Http\Response 
-     */ 
     public function details() 
-    { 
+    {
         try{
             $user = Auth::user(); 
             $result = ['user' => $user];
@@ -135,6 +130,16 @@ class UserController extends Controller
         }
     }
 
+    public function logout(Request $request) {
+        $request->user()->token()->revoke();
+        return response()->json([
+            'message' => 'Successfully logged out'
+        ]);
+    }
+
+    public function unauthorized() { 
+        return $this->formateErrorResponse('Unauthorised');
+    }
 
     public function formateSuccessResponse($result){
         return response()->json(

@@ -17,6 +17,8 @@ use Illuminate\Support\Facades\Route;
 Route::post('login', [ 'as' => 'login', 'uses' => 'API\UserController@login']);
 Route::post('register', [ 'as' => 'register', 'uses' => 'API\UserController@register']);
 
-Route::group(['middleware' => 'auth:api'], function(){
-	Route::post('details', 'API\UserDetailController@details');
+Route::get('unauthorized', 'API\UserController@unauthorized');
+Route::group(['middleware' => ['CheckClientCredentials','auth:api']], function() {
+    Route::post('details', 'API\UserController@details');
+    Route::post('logout', 'API\UserController@logout');
 });
