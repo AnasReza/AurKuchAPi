@@ -1,0 +1,13 @@
+
+php artisan serve
+
+php artisan clear-compiled 
+composer dump-autoload
+php artisan optimize
+
+php artisan route:clear
+
+
+Error: Personal access client not found. Please create one
+Error solved: php artisan passport:install
+
