@@ -32,7 +32,7 @@ class SmsController extends Controller
             $userId = Auth::user()->id; 
 
             $validator = Validator::make($request->all(), [ 
-                'phone_number' => ['required', 'numeric', 'unique:users'],
+                'phone_number' => ['required', 'numeric'],
             ]);
 
             if ($validator->fails()) { 
@@ -62,14 +62,34 @@ class SmsController extends Controller
 
     }
 
-    /** 
-     * details api 
-     * 
-     * @return \Illuminate\Http\Response 
-     */ 
-    public function details() 
-    { 
-        var_dump('expression');   
+    public function verifyOtp(Request $request){
+    	try {
+    		$userId = Auth::user()->id; 
+	        $validator = Validator::make($request->all(), [ 
+	        	'verification_code' => ['required', 'numeric'],
+	            'phone_number' => ['required', 'numeric']
+	        ]);
+
+	        $client = new Client($this->twilioSid, $this->twilioToken);
+	        $curlOptions = [ CURLOPT_SSL_VERIFYHOST => false, CURLOPT_SSL_VERIFYPEER => false];
+			$client->setHttpClient(new CurlClient($curlOptions));
+	        
+	        $input = $request->all(); 
+
+	        $verification = $client->verify->v2
+	        	->services($this->twilioVerifySid)
+	            ->verificationChecks
+	            ->create($input['verification_code'], array('to' => $input['phone_number']));
+
+	        if ($verification->valid) {
+	            $user = tap(User::where('phone_number', $input['phone_number']))->update(['is_verified' => true]);
+	            return $this->helperData->formateSuccessResponse('Phone Number Verified');
+	        }else{
+	            return $this->helperData->formateErrorResponse('Verification code is not valid');
+	        }
+    	}catch (\Exception $ex) {
+            return $this->helperData->formateErrorResponse($ex->getMessage());
+        }
     }
 
 }

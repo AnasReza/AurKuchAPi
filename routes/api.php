@@ -20,4 +20,5 @@ Route::post('register', [ 'as' => 'register', 'uses' => 'API\UserController@regi
 Route::group(['middleware' => 'auth:api'], function(){
 	Route::post('details', 'API\UserController@details');
 	Route::post('sendOtp', 'API\SmsController@sendOtpToNumber');
+	Route::post('verifyOtp', 'API\SmsController@verifyOtp');
 });
